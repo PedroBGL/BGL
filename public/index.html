@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BGL LOL RACE INVITATIONAL 2025 SPONSORED BY THE BGL MOUTAIN DEW BAJA BLASTER GAMING AND MULTIMEDIA ARENA</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #FF6E00;
+      color: #FED8B1;
+      padding: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+    }
+
+    .player {
+      border: 1px solid #E89149;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #FF9913;
+    }
+
+    .stats {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat {
+      margin: 0.25rem 0;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #FED8B1;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>BGL LOL RACE INVITATIONAL 2025 SPONSORED BY THE BGL MOUTAIN DEW BAJA BLASTER GAMING AND MULTIMEDIA ARENA</h1>
+  <div id="players"></div>
+
+  <script>
+    const playerNames = [
+      "Quauh",
+      "Elias",
+      "boyhoIe blaster#BGL",
+      "girthosaurus rex#BGL",
+      "2 Joints#BG",
+      "2 More Joints#BGL",
+      "Bruma1#117",
+      "Strugg n tugg#g00n"
+    ];
+
+    async function loadStats() {
+      const res = await fetch('/api/players');
+      const players = await res.json();
+
+      const container = document.getElementById('players');
+      players.forEach((player, index) => {
+        const displayName = playerNames[index] || `Player ${index + 1}`;
+
+        const el = document.createElement('div');
+        el.className = 'player';
+
+        el.innerHTML = `
+          <div class="label">${displayName}</div>
+          <div class="stats">
+            <div class="stat"><strong>Games Played:</strong> ${player.gamesPlayed}</div>
+            <div class="stat"><strong>Winrate:</strong> ${player.winrate}</div>
+            <div class="stat"><strong>Most Played Champion:</strong> ${player.mostPlayedChampion}</div>
+            <div class="stat"><strong>Rank:</strong> ${player.rank}</div>
+          </div>
+        `;
+
+        container.appendChild(el);
+      });
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>
