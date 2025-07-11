@@ -1,4 +1,5 @@
 const express = require("express");
+const fs = require("fs");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 require("dotenv").config();
 
@@ -6,6 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.RIOT_API_KEY;
 
+// ✅ List up to 8 PUUIDs here
 const puuids = [
   "Yd31laKpHbFE7Hwjh1tHyrNVzYwaCj_vKZWNFFLGKj3RnvGO7CZuJaDFndOKfeNLKjKQUTO59YP5EA",
   "GjTtoWxns42nUfeqYSBftixDwj6ht9CPqoBksR0VB9sUHiH4JXCjhf1Xeq_Cvv6X427zPtfKjOT8rw",
@@ -18,10 +20,26 @@ const puuids = [
 ];
 
 const REGION = "americas";
-const PLATFORM = "na1";
+const LEAGUE_REGION = "na1";
 const SEASON_START = new Date("2025-01-09T00:00:00Z").getTime();
-const CACHE_TTL = 5 * 60 * 1000;
-const cache = {};
+const CACHE_FILE = "cache.json";
+
+// ✅ Load persistent cache from disk
+let cache = {};
+if (fs.existsSync(CACHE_FILE)) {
+  try {
+    cache = JSON.parse(fs.readFileSync(CACHE_FILE));
+    console.log("💾 Cache loaded from disk");
+  } catch (err) {
+    console.warn("⚠️ Failed to load cache, starting fresh");
+    cache = {};
+  }
+}
+
+// ✅ Save cache to disk
+function saveCache() {
+  fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+}
 
 app.use(express.static("public"));
 
@@ -56,30 +74,37 @@ async function getAllMatchIds(puuid) {
 
 async function getSummonerStats(puuid) {
   const now = Date.now();
-  if (cache[puuid] && now - cache[puuid].timestamp < CACHE_TTL) {
-    console.log(`🧠 Cache hit for ${puuid}`);
-    return cache[puuid].data;
+
+  // 🧠 Check cache
+  if (!cache[puuid]) {
+    cache[puuid] = {
+      timestamp: now,
+      matchIds: [],
+      wins: 0,
+      gamesPlayed: 0,
+      champCounts: {},
+      rank: "Unranked"
+    };
   }
 
-  console.log(`🌐 Fetching fresh data for ${puuid}`);
-  let totalGames = 0;
-  let wins = 0;
-  const champCounts = {};
+  const previous = cache[puuid];
+  const allMatchIds = await getAllMatchIds(puuid);
+  const newMatchIds = allMatchIds.filter(id => !previous.matchIds.includes(id));
 
-  const matchIds = await getAllMatchIds(puuid);
-  console.log(`📦 Found ${matchIds.length} matches for puuid: ${puuid}`);
+  if (newMatchIds.length === 0) {
+    console.log(`🧠 No new matches for ${puuid}, using cached stats.`);
+    return buildStats(previous);
+  }
 
-  for (const matchId of matchIds) {
+  console.log(`🔄 Found ${newMatchIds.length} new matches for ${puuid}`);
+
+  for (const matchId of newMatchIds) {
     const matchUrl = `https://${REGION}.api.riotgames.com/lol/match/v5/matches/${matchId}`;
     const matchRes = await fetch(matchUrl, {
       headers: { "X-Riot-Token": API_KEY },
     });
 
-    if (!matchRes.ok) {
-      const err = await matchRes.text();
-      console.warn(`⚠️ Match ${matchId} failed: ${matchRes.status} ${err}`);
-      continue;
-    }
+    if (!matchRes.ok) continue;
 
     const match = await matchRes.json();
     const info = match.info;
@@ -90,52 +115,49 @@ async function getSummonerStats(puuid) {
     const player = info.participants.find(p => p.puuid === puuid);
     if (!player) continue;
 
-    totalGames++;
-    if (player.win) wins++;
+    previous.gamesPlayed++;
+    if (player.win) previous.wins++;
 
     const champ = player.championName;
-    champCounts[champ] = (champCounts[champ] || 0) + 1;
+    previous.champCounts[champ] = (previous.champCounts[champ] || 0) + 1;
+    previous.matchIds.push(matchId);
   }
 
-  const mostPlayedChampion = Object.entries(champCounts)
+  // 🏆 Update rank if needed
+  try {
+    const rankRes = await fetch(`https://${LEAGUE_REGION}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`, {
+      headers: { "X-Riot-Token": API_KEY },
+    });
+    if (rankRes.ok) {
+      const ranks = await rankRes.json();
+      const solo = ranks.find(entry => entry.queueType === "RANKED_SOLO_5x5");
+      previous.rank = solo ? `${solo.tier} ${solo.rank}` : "Unranked";
+    }
+  } catch (err) {
+    console.warn("⚠️ Failed to fetch rank for", puuid);
+  }
+
+  previous.timestamp = now;
+  saveCache();
+  return buildStats(previous);
+}
+
+function buildStats(data) {
+  const mostPlayedChampion = Object.entries(data.champCounts)
     .sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-  // ✅ Fetch rank directly via PUUID
-  let rank = "Unranked";
-  const rankUrl = `https://${PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`;
-  const rankRes = await fetch(rankUrl, {
-    headers: { "X-Riot-Token": API_KEY },
-  });
-
-  if (rankRes.ok) {
-    const rankData = await rankRes.json();
-    console.log(`🎖️ Rank data for PUUID ${puuid}:`, rankData);
-    const solo = rankData.find(entry => entry.queueType === "RANKED_SOLO_5x5");
-    if (solo) {
-      rank = `${solo.tier} ${solo.rank} (${solo.leaguePoints} LP)`;
-    }
-  } else {
-    const errorText = await rankRes.text();
-    console.warn(`⚠️ Failed to fetch rank for ${puuid}: ${rankRes.status} ${errorText}`);
-  }
-
-  const result = {
-    gamesPlayed: totalGames,
-    winrate: totalGames > 0 ? `${((wins / totalGames) * 100).toFixed(1)}%` : "N/A",
+  return {
+    summonerName: "",
+    gamesPlayed: data.gamesPlayed,
+    winrate: data.gamesPlayed > 0 ? `${((data.wins / data.gamesPlayed) * 100).toFixed(1)}%` : "N/A",
     mostPlayedChampion,
-    rank,
+    rank: data.rank || "Unranked"
   };
-
-  cache[puuid] = {
-    timestamp: now,
-    data: result,
-  };
-
-  return result;
 }
 
 app.get("/api/players", async (req, res) => {
   console.log("📡 Incoming request to /api/players");
+
   try {
     const stats = await Promise.all(puuids.map(getSummonerStats));
     console.log("✅ Stats generated:", stats);

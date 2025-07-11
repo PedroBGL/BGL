@@ -1,0 +1,95 @@
+{
+  "IglbFoU4PWt6nd-8BNFOiwGr6dt3kGP2grDome691C_eqZKVl9_k3_8c6qJb8M7K8np1J9bxRVKukg": {
+    "timestamp": 1752201749501,
+    "matchIds": [
+      "NA1_5322665683",
+      "NA1_5322649308",
+      "NA1_5322172368",
+      "NA1_5322158905",
+      "NA1_5322138636",
+      "NA1_5321988755",
+      "NA1_5321968726",
+      "NA1_5321737624",
+      "NA1_5321478626",
+      "NA1_5320974352",
+      "NA1_5320940389",
+      "NA1_5320909410",
+      "NA1_5320877044",
+      "NA1_5320857302",
+      "NA1_5320824804",
+      "NA1_5320610719",
+      "NA1_5320593508",
+      "NA1_5320313478",
+      "NA1_5320282274",
+      "NA1_5320253049"
+    ],
+    "wins": 8,
+    "gamesPlayed": 20,
+    "champCounts": {
+      "Mel": 13,
+      "Samira": 1,
+      "Senna": 2,
+      "Talon": 1,
+      "Gnar": 1,
+      "Kayle": 1,
+      "Kayn": 1
+    },
+    "rank": "SILVER IV"
+  },
+  "PUUID_2": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_3": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_4": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_5": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_6": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_7": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  },
+  "PUUID_8": {
+    "timestamp": 1752201512560,
+    "matchIds": [],
+    "wins": 0,
+    "gamesPlayed": 0,
+    "champCounts": {},
+    "rank": "Unranked"
+  }
+}
