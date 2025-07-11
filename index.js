@@ -4,7 +4,11 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+if (!PORT) {
+  console.error("❌ PORT environment variable is not set. Exiting.");
+  process.exit(1);
+}
 const API_KEY = process.env.RIOT_API_KEY;
 
 // ✅ List up to 8 PUUIDs here
